@@ -63,31 +63,43 @@ public class Register {
         if(getCentValue(given)<price)
             throw new NotEnoughChangeException("");
 
+        // Zubuchen der gegebenen Münzen zur Kasse
+        for (Coin c : given.keySet())
+            register.put(c, given.get(c));
+
+        // Berechnen des Wechselgelds
+        int change = getCentValue(given) - price;
+
         // Von der größten zur kleinsten Münze
         for (Coin c : Coin.values()) {
-            // Falls die Münze vorhanden und der Preis groß genug
-            while((given.get(c)>0) && (price >= c.getValue())){
-                price -= c.getValue(); // Preis reduzieren
+            if (register.get(c) == null) continue;
+            // Falls die Münze vorhanden und der Restbetrag groß genug
+            while((register.get(c)>0) && (change >= c.getValue())){
+                change -= c.getValue(); // Rest reduzieren
                 result.addCoins(1, c); // Münze in das Rückgaberegister
-                given.put(c, given.get(c)-1); // Münze aus Kasse entfernen
+                register.put(c, register.get(c)-1); // Münze aus Kasse entfernen
             }
         }
         return result.register;
     }
 
-    public static void main(String[] args) {
-        Register tabea = new Register();
-        tabea.addCoins(10,Coin.ONE);
-        tabea.addCoins(20,Coin.TWO);
-        tabea.addCoins(12,Coin.FIVE);
-        tabea.addCoins(15,Coin.TEN);
-        tabea.addCoins(3,Coin.TWENTY);
-        tabea.addCoins(2,Coin.FIFTY);
-        tabea.addCoins(1,Coin.ONE_HUNDRED);
-        // tabea.addCoins(2,Coin.TWO_HUNDRED);
-        System.out.println(tabea.getCurrentValue() + " Cent");
 
-        Map<Coin, Integer> change = tabea.getChange(tabea.register, 365 );
+
+    public static void main(String[] args) {
+        Register kasse = new Register();
+        kasse.addCoins(10,Coin.ONE);
+        kasse.addCoins(20,Coin.TWO);
+        kasse.addCoins(12,Coin.FIVE);
+        kasse.addCoins(15,Coin.TEN);
+        kasse.addCoins(3,Coin.TWENTY);
+        kasse.addCoins(2,Coin.FIFTY);
+        kasse.addCoins(1,Coin.ONE_HUNDRED);
+        kasse.addCoins(2,Coin.TWO_HUNDRED);
+
+        Map<Coin, Integer> zahlung = new HashMap<>();
+        zahlung.put(Coin.TWO_HUNDRED, 10);
+
+        Map<Coin, Integer> change = kasse.getChange(zahlung, 1599 );
         System.out.println(asString(change));
     }
 }
