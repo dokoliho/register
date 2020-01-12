@@ -28,7 +28,6 @@ public class Register {
         return result;
     }
 
-    // Für die Ausgabe hilfreich
     public static final String asString(Map<Coin, Integer> coins) {
         StringBuilder sb = new StringBuilder();
         for (Coin c : Coin.values())
@@ -52,37 +51,63 @@ public class Register {
         return getCentValue(register);
     }
 
-    public Map<Coin, Integer> getChange(Map<Coin, Integer> given, int price){
-        // Verwendung eines Registers für die Rückgabe erspart die Initialisierung
-        Register result = new Register();
+    public Map<Coin, Integer> getChange(Map<Coin, Integer> given, int price) {
+        if (isValidPayment(given, price)) {
+            addMapOfCoins(given); // Zubuchen der Zahlung
+            int change = getCentValue(given) - price;
+            return removeMinimalCoinMap(change);
+        }
+        return null;
+    }
 
-        if(given == null)
-            throw new IllegalArgumentException();
-        if(price<=0)
-            throw new IllegalArgumentException("price must be positive");
-        if(getCentValue(given)<price)
-            throw new NotEnoughChangeException("");
-
-        // Zubuchen der gegebenen Münzen zur Kasse
-        for (Coin c : given.keySet())
-            register.put(c, given.get(c));
-
-        // Berechnen des Wechselgelds
-        int change = getCentValue(given) - price;
-
+    private Map<Coin, Integer> removeMinimalCoinMap(int change) {
+        Map<Coin, Integer> result = new HashMap<>();
         // Von der größten zur kleinsten Münze
         for (Coin c : Coin.values()) {
             if (register.get(c) == null) continue;
             // Falls die Münze vorhanden und der Restbetrag groß genug
             while((register.get(c)>0) && (change >= c.getValue())){
                 change -= c.getValue(); // Rest reduzieren
-                result.addCoins(1, c); // Münze in das Rückgaberegister
-                register.put(c, register.get(c)-1); // Münze aus Kasse entfernen
+                addCoinToMap(result, c); // Münze in das Rückgaberegister
+                removeCoinFromMap(this.register, c); // Münze aus Kasse entfernen
             }
         }
-        return result.register;
+        return result;
     }
 
+    private static void addCoinToMap(Map<Coin, Integer> map,  Coin c) {
+        if (map.containsKey(c))
+            map.put(c, map.get(c)+1);
+        else
+            map.put(c, 1);
+    }
+
+    private static void removeCoinFromMap(Map<Coin, Integer> map,  Coin c) {
+        if (map.containsKey(c)) {
+            map.put(c, map.get(c) - 1);
+            if (map.get(c) <= 0)
+                map.remove(c);
+        }
+        else
+            throw new IllegalArgumentException("Removing not existing Coin");
+    }
+
+
+    private void addMapOfCoins(Map<Coin, Integer> given) {
+        for (Coin c : given.keySet())
+            if (given.get(c)>0)
+                this.addCoins(given.get(c), c);
+    }
+
+    private boolean isValidPayment(Map<Coin, Integer> given, int price) {
+        if(given == null)
+            throw new IllegalArgumentException();
+        if(price<=0)
+            throw new IllegalArgumentException("price must be positive");
+        if(getCentValue(given)<price)
+            throw new NotEnoughChangeException("");
+        return true;
+    }
 
 
     public static void main(String[] args) {
